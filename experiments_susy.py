@@ -1,16 +1,16 @@
-# Import necessary libraries
 import numpy as np
 import os
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
-from tests import rMMDtest, MMDb_test, NysMMDtestV2
+from tests import rMMDtest, MMDb_test, NysMMDtest
 from sampler import sample_higgs_susy_dataset, read_data_susy
 from stat_utils import list_num_features, check_if_seeds_exist, median_pairwise
 
+# Define constant for scaling
 SQRT_2 = np.sqrt(2)
 
 # Specify which tests to perform
-which_tests = ["uniform",  "rlss", "rff"]  # Test types to run. Options: "fullrank", "uniform",  "rlss", "rff"
+which_tests = ["uniform", "rlss", "rff"]  # Test types to run. Options: "fullrank", "uniform",  "rlss", "rff"
 
 # Parameters for statistical testing
 alpha = 0.05  # Significance level of the test
@@ -18,14 +18,12 @@ B = 199  # Number of permutations in the permutation test
 n_tests = 400  # Number of tests to perform on different subsamples
 
 # Parameters for dataset sampling
-sample_sizes = [20000]  # Size of each sample. Total size = 2 * sample_size #[1000, 2000, 4000, 8000, 12000, 16000, 20000]
-lambda_mix = 0.05 # Proportion of class 1 in the mixture. (1-lambda_mix) will be the proportion of class 0.
-reduced = 0
-
+sample_sizes = [1000, 2000, 4000, 8000, 12000, 16000, 20000]  # Size of each sample. Total size = 2 * sample_size
+lambda_mix = 0.05  # Proportion of class 1 in the mixture. (1-lambda_mix) will be the proportion of class 0.
 
 # Main execution block
 if __name__ == "__main__":
-    print(f"Susy experiments")  # Log the start of experiments
+    print("Susy experiments")  # Log the start of experiments
 
     # Load the full Higgs dataset
     X_all, Y_all = read_data_susy("/data/DATASETS/SUSY/Susy.mat")
@@ -34,21 +32,15 @@ if __name__ == "__main__":
     X_tune = sample_higgs_susy_dataset(X_all, Y_all, 1000, alpha_mix=lambda_mix, seed=None)
     sigmahat = median_pairwise(X_tune)  # Median pairwise distance as kernel bandwidth
 
-
+    # Iterate over different sample sizes
     for n in sample_sizes:
-
-        #seeds = generate_seeds(n_tests)
-
-        ntot = 2*n
-
+        ntot = 2 * n
         K = list_num_features(ntot)
         print(f"Num. of features {K}")
 
         # Define output folder for storing results
-        output_folder = f'./output_susy_paper_fixseed_v2/reduced{reduced}_ntot{ntot}_B{B+1}_niter{n_tests}_mix{lambda_mix}'
+        output_folder = f'./output_susy_paper/ntot{ntot}_B{B+1}_niter{n_tests}_mix{lambda_mix}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
-        #np.save(output_folder + "/seeds.npy", seeds) # save seeds
-
 
         # Initialize arrays to store test results for each method
         if "fullrank" in which_tests:
@@ -61,15 +53,14 @@ if __name__ == "__main__":
 
         if "rlss" in which_tests:
             os.makedirs(output_folder + '/rlss/')
-            output_rlss = np.zeros(shape=(n_tests, len(K), 3))  # For uniform sampling Nyström tests
+            output_rlss = np.zeros(shape=(n_tests, len(K), 3))  # For RLSS Nyström tests
 
         if "rff" in which_tests:
             os.makedirs(output_folder + '/rff/')
-            output_rff = np.zeros(shape=(n_tests, len(K), 3))  # For uniform sampling Nyström tests
+            output_rff = np.zeros(shape=(n_tests, len(K), 3))  # For random Fourier feature tests
 
         # Call function to check or generate seeds
         seeds = check_if_seeds_exist(output_folder, n_tests)
-
 
         # Perform tests over multiple iterations
         for test in range(n_tests):
@@ -90,25 +81,26 @@ if __name__ == "__main__":
             if "uniform" in which_tests:
                 print("Uniform test")
                 for i, k in enumerate(K):
-                    output_uni[test, i, :] = NysMMDtestV2(X, seed=test_seed, bandwidth=sigmahat, alpha=0.05, method='uniform', k=k, B=B)
+                    output_uni[test, i, :] = NysMMDtest(X, seed=test_seed, bandwidth=sigmahat, alpha=0.05, method='uniform', k=k, B=B)
 
             # Perform recursive LSS Nyström-based permutation test if specified
             if "rlss" in which_tests:
                 print("RLSS test")
                 for i, k in enumerate(K):
-                    output_rlss[test, i, :] = NysMMDtestV2(X, seed=test_seed, bandwidth=sigmahat, alpha=0.05, method='rlss', k=k, B=B)
+                    output_rlss[test, i, :] = NysMMDtest(X, seed=test_seed, bandwidth=sigmahat, alpha=0.05, method='rlss', k=k, B=B)
 
+            # Perform random Fourier feature-based permutation test if specified
             if "rff" in which_tests:
                 print("RFF test")
                 for i, k in enumerate(K):
-                    output_rff[test, i, :] = rMMDtest(X, seed = test_seed, bandwidth=sigmahat*SQRT_2, alpha=alpha, R=k, B=B)
+                    output_rff[test, i, :] = rMMDtest(X, seed=test_seed, bandwidth=sigmahat*SQRT_2, alpha=alpha, R=k, B=B)
 
         # Save results for each test type to the corresponding subdirectory
         if "fullrank" in which_tests:
-            np.save(output_folder + f'/fullrank/results.npy', output_full)
+            np.save(output_folder + '/fullrank/results.npy', output_full)
         if "uniform" in which_tests:
-            np.save(output_folder + f'/uniform/results.npy', output_uni)
+            np.save(output_folder + '/uniform/results.npy', output_uni)
         if "rlss" in which_tests:
-            np.save(output_folder + f'/rlss/results.npy', output_rlss)
+            np.save(output_folder + '/rlss/results.npy', output_rlss)
         if "rff" in which_tests:
-            np.save(output_folder + f'/rff/results.npy', output_rff)
+            np.save(output_folder + '/rff/results.npy', output_rff)

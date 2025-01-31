@@ -121,7 +121,7 @@ def rMMDtest(Z, seed=None, bandwidth=1, alpha=0.05, kernel='gaussian', R=20, B=1
     dt = time.time() - start  # Compute execution time
     return output, dt, R
 
-def NysMMDtestV2(Z, seed=None, bandwidth=1, alpha=0.05, method='uniform', k=20, B=199):
+def NysMMDtest(Z, seed=None, bandwidth=1, alpha=0.05, method='uniform', k=20, B=199):
     """
     Performs the Nyström approximation MMD test.
     

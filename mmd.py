@@ -3,17 +3,21 @@ from kernels import RBFkernel
 
 
 def MMD(phiX1, phiX2):
-    # Compute the Maximum Mean Discrepancy (MMD) between two feature sets phiX1 and phiX2.
+    """
+    Compute the Maximum Mean Discrepancy (MMD) between two feature sets phiX1 and phiX2.
 
+    Args:
+        phiX1 (np.ndarray): Feature representation of first sample set (shape [n_samples, n_features]).
+        phiX2 (np.ndarray): Feature representation of second sample set (shape [n_samples, n_features]).
 
+    Returns:
+        float: The squared norm of the mean difference (MMD statistic).
+    """
     # Compute the mean difference vector between the two groups in the feature space
-    t = phiX1.mean(axis=0) - phiX2.mean(axis=0) # phi shape: (sample_size, n_features)
-
+    t = phiX1.mean(axis=0) - phiX2.mean(axis=0)  # Compute the mean of each feature and subtract
 
     # Return the squared norm of the mean difference (MMD statistic)
     return np.inner(t, t)  # Equivalent to the dot product of t with itself
-
-
 
 
 def MMD2b(x, y, sigma):
@@ -28,14 +32,12 @@ def MMD2b(x, y, sigma):
     Returns:
         float: The biased MMD^2 value.
     """
+    # Compute kernel matrices using the RBF kernel function
+    K_xx = RBFkernel(x, x, sigma)  # Compute kernel matrix for X
+    K_yy = RBFkernel(y, y, sigma)  # Compute kernel matrix for Y
+    K_xy = RBFkernel(x, y, sigma)  # Compute kernel matrix between X and Y
 
-    # Compute kernel matrices
-    K_xx = RBFkernel(x, x, sigma)
-    K_yy = RBFkernel(y, y, sigma)
-    K_xy = RBFkernel(x, y, sigma)
-
-    # Compute biased MMD^2
+    # Compute biased MMD^2 using kernel mean values
     mmd2 = K_xx.mean() + K_yy.mean() - 2 * K_xy.mean()
     
     return mmd2
-

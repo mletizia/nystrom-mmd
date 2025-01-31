@@ -1,7 +1,6 @@
 import numpy as np
 from kernels import RBFkernel
 from scipy.linalg import svd
-from sklearn.gaussian_process.kernels import RBF
 
 from recursive_nystrom import recursiveNystrom, gauss
 
