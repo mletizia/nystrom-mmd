@@ -13,218 +13,157 @@ from mmd import MMD2b
 
 from nystrom import nys_inds, nystrom_features
 
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
 def MMDb_test(Z, bw, seed=None, alpha=0.05, B=199, plot=False):
+    """
+    Performs the MMD (Maximum Mean Discrepancy) permutation test.
+    
+    Parameters:
+        Z (array): Feature matrix of shape (2n, d).
+        bw (float): Bandwidth parameter for the kernel.
+        seed (int, optional): Random seed for reproducibility.
+        alpha (float): Significance level for the test.
+        B (int): Number of permutations.
+        plot (bool): Whether to plot the distribution of permuted statistics.
 
-    start = time.time()  # Record computation time
+    Returns:
+        output (int): 1 if null hypothesis is rejected, 0 otherwise.
+        dt (float): Computation time in seconds.
+        ntot (int): Total number of samples.
+    """
+    start = time.time()  # Start computation timer
+    rng = np.random.default_rng(seed)  # Random number generator
 
-    rng = np.random.default_rng(seed)
-
-    ntot, d = Z.shape  # Get size of feature matrix
-    n = int(ntot/2) # Get sample size
+    ntot, d = Z.shape  # Total number of samples and feature dimension
+    n = int(ntot / 2)  # Sample size per group
 
     # Compute observed test statistic
-    t_obs = MMD2b(Z[:n],Z[n:], bw)
+    t_obs = MMD2b(Z[:n], Z[n:], bw)
 
-    # Generate permuted statistics
-    H0 = np.empty(B+1)
+    # Generate permuted test statistics
+    H0 = np.empty(B + 1)
     for i in tqdm(range(B)):
         Z_perm = rng.permutation(Z)  # Permute data
         H0[i] = MMD2b(Z_perm[:n], Z_perm[n:], bw)
-
-    # add observed value
+    
+    # Add observed test statistic to permutation distribution
     H0[-1] = t_obs
 
-    # compute output of the test
+    # Compute test decision and threshold
     output, thr = decide(H0, t_obs, B, alpha)
 
+    # Plot histogram if requested
     if plot:
         values, bins, patches = plt.hist(H0, label=r"$H_0$")
-        plt.vlines(thr, 0, max(values) * 0.8, color='red', label=f"{alpha}-level thr")  # Threshold line
-        plt.vlines(t_obs, 0, max(values) * 0.8, color='black', label="Obs test statistic")  # Observed statistic line
+        plt.vlines(thr, 0, max(values) * 0.8, color='red', label=f"{alpha}-level threshold")
+        plt.vlines(t_obs, 0, max(values) * 0.8, color='black', label="Observed test statistic")
         plt.legend()
         plt.show()
 
-    dt = time.time() - start
-
+    dt = time.time() - start  # Compute total execution time
     return output, dt, ntot
 
-
-# converted to numpy from the implementation in https://github.com/ikjunchoi/rff-mmd
-
-def rMMDtest(
-    Z,
-    seed=None,
-    bandwidth=1,
-    alpha=0.05,
-    kernel='gaussian',
-    R=20,
-    B=199
-):
-    '''
-    [Input and output]
-        (Input)
-            X: array_like
-                The shape of X must be of the form (m, d) where m is the number
-                of samples and d is the dimension.
-            Y: array_like
-                The shape of Y must be of the form (n, d) where n is the number
-                of samples and d is the dimension.
-
-        (Output)
-            Delta: int
-                The value of delta must be 0 or 1;
-                    return 0 if the test ACCEPTS the null
-                 or return 1 if the test REJECTS the null 
-
-
-    [Parameters]
-        key:
-            Placeholder for compatibility with JAX version (unused in NumPy).
-        seed:
-            Random seed for reproducibility.
-        alpha: scalar
-            The value of alpha must be between 0 and 1.
-        bandwidth: scalar:
-            The value of bandwidth must be between 0 and 1.
-        kernel: str
-            The value of kernel must be "gaussian", ...
-        R: int
-            The number of random Fourier features.
-        stat_type: str
-            The value must be 'U' or 'V'; U-statistic or V-statistic.
-        B: int
-            The number of simulated test statistics to approximate the quantiles.
-    '''
+def rMMDtest(Z, seed=None, bandwidth=1, alpha=0.05, kernel='gaussian', R=20, B=199):
+    """
+    Performs the Random Fourier Feature approximation MMD test.
     
+    Parameters:
+        Z (array): Feature matrix of shape (2n, d).
+        seed (int, optional): Random seed for reproducibility.
+        bandwidth (float): Kernel bandwidth parameter.
+        alpha (float): Significance level for the test.
+        kernel (str): Kernel type ('gaussian' supported).
+        R (int): Number of random Fourier features.
+        B (int): Number of permutations.
+
+    Returns:
+        output (int): 1 if null hypothesis is rejected, 0 otherwise.
+        dt (float): Computation time in seconds.
+        R (int): Number of random Fourier features used.
+    """
     start = time.time()
+    rng = np.random.default_rng(seed)  # Random number generator
 
-    # Ensure reproducibility
-    rng = np.random.default_rng(seed)
+    ntot, d = Z.shape  # Total samples and feature dimension
+    n = m = int(ntot / 2)  # Sample size per group
 
-    ntot, d = Z.shape
-
-    n = m = int(ntot/2)
-
-    #Rhalf = int(R//2)
-
-    # Feature mapping
+    # Generate random Fourier features
     if kernel == 'gaussian':
         omegas = np.sqrt(2) / bandwidth * rng.normal(size=(R, d))
     else:
         raise ValueError("Currently only 'gaussian' kernel is supported.")
 
-    omegas_Z = np.dot(Z, omegas.T)  # (m+n) x R
-    cos_feature = (1 / np.sqrt(R)) * np.cos(omegas_Z)  # (m+n) x R
-    sin_feature = (1 / np.sqrt(R)) * np.sin(omegas_Z)  # (m+n) x R
-    psi_Z = np.concatenate((cos_feature, sin_feature), axis=1)  # (m+n) x 2R
+    omegas_Z = np.dot(Z, omegas.T)
+    cos_feature = (1 / np.sqrt(R)) * np.cos(omegas_Z)
+    sin_feature = (1 / np.sqrt(R)) * np.sin(omegas_Z)
+    psi_Z = np.concatenate((cos_feature, sin_feature), axis=1)
 
-    # Permutation test
+    # Perform permutation test
     I_1 = np.concatenate((np.ones(m), np.zeros(n)))
-    I = np.tile(I_1, (B + 1, 1))  # (B+1) x (m+n)
-
-    # Independent permutations along axis=1
+    I = np.tile(I_1, (B + 1, 1))
     I_X = independent_permutation(I, rng, axis=1)
-    I_X[0] = I_1  # Include the non-permuted case Z=(X,Y)
+    I_X[0] = I_1  # Keep original order for the first case
     I_Y = 1 - I_X
 
-    bar_Z_B_piX = (1 / m) * I_X @ psi_Z  # (B+1) x R
-    bar_Z_B_piY = (1 / n) * I_Y @ psi_Z  # (B+1) x R
-    T = bar_Z_B_piX - bar_Z_B_piY  # (B+1) x R
-    V = np.sum(T ** 2, axis=1)  # (B+1, )
+    # Compute test statistics
+    bar_Z_B_piX = (1 / m) * I_X @ psi_Z
+    bar_Z_B_piY = (1 / n) * I_Y @ psi_Z
+    T = bar_Z_B_piX - bar_Z_B_piY
+    V = np.sum(T ** 2, axis=1)
 
-    test_stats = V
+    rMMD2 = V[0]
+    output, _ = decide(V, rMMD2, B, alpha)
 
-    rMMD2 = test_stats[0]
-
-    # take decision based on empirical threshold and level
-    output, _ = decide(test_stats, rMMD2, B, alpha)
-
-    dt = time.time() - start
-
+    dt = time.time() - start  # Compute execution time
     return output, dt, R
 
-
-def NysMMDtestV2(
-    Z,
-    seed=None,
-    bandwidth=1,
-    alpha=0.05,
-    method='uniform',
-    k=20,
-    B=199
-):
-    '''
-    [Input and output]
-        (Input)
-            X: array_like
-                The shape of X must be of the form (m, d) where m is the number
-                of samples and d is the dimension.
-            Y: array_like
-                The shape of Y must be of the form (n, d) where n is the number
-                of samples and d is the dimension.
-
-        (Output)
-            Delta: int
-                The value of delta must be 0 or 1;
-                    return 0 if the test ACCEPTS the null
-                 or return 1 if the test REJECTS the null 
-
-
-    [Parameters]
-        key:
-            Placeholder for compatibility with JAX version (unused in NumPy).
-        seed:
-            Random seed for reproducibility.
-        alpha: scalar
-            The value of alpha must be between 0 and 1.
-        bandwidth: scalar:
-            The value of bandwidth must be between 0 and 1.
-        kernel: str
-            The value of kernel must be "gaussian", ...
-        R: int
-            The number of random Fourier features.
-        stat_type: str
-            The value must be 'U' or 'V'; U-statistic or V-statistic.
-        B: int
-            The number of simulated test statistics to approximate the quantiles.
-    '''
-
-    start = time.time()  # Record computation time
+def NysMMDtestV2(Z, seed=None, bandwidth=1, alpha=0.05, method='uniform', k=20, B=199):
+    """
+    Performs the Nyström approximation MMD test.
     
-    # Ensure reproducibility
-    rng = np.random.default_rng(seed)
+    Parameters:
+        Z (array): Feature matrix of shape (2n, d).
+        seed (int, optional): Random seed for reproducibility.
+        bandwidth (float): Kernel bandwidth parameter.
+        alpha (float): Significance level for the test.
+        method (str): Nyström sampling method ('uniform' or other).
+        k (int): Number of Nyström features.
+        B (int): Number of permutations.
 
-    ntot, d = Z.shape
+    Returns:
+        output (int): 1 if null hypothesis is rejected, 0 otherwise.
+        dt (float): Computation time in seconds.
+        k (int): Number of Nyström features used.
+    """
+    start = time.time()  # Start computation timer
+    rng = np.random.default_rng(seed)  # Random number generator
 
-    n = m = int(ntot/2)
+    ntot, d = Z.shape  # Total samples and feature dimension
+    n = m = int(ntot / 2)  # Sample size per group
 
-    # Feature mapping
+    # Compute Nyström feature mapping
     inds, _ = nys_inds(Z, k, method, bandwidth, 0, seed)
-
-    # Map data to Nyström feature space
     psi_Z = nystrom_features(Z, inds, bandwidth)
 
-    # Permutation test
+    # Perform permutation test
     I_1 = np.concatenate((np.ones(m), np.zeros(n)))
-    I = np.tile(I_1, (B + 1, 1))  # (B+1) x (m+n)
-
-    # Independent permutations along axis=1
+    I = np.tile(I_1, (B + 1, 1))
     I_X = independent_permutation(I, rng, axis=1)
-    I_X[0] = I_1  # Include the non-permuted case Z=(X,Y)
+    I_X[0] = I_1  # Keep original order for the first case
     I_Y = 1 - I_X
 
-    bar_Z_B_piX = (1 / m) * I_X @ psi_Z  # (B+1) x 2R
-    bar_Z_B_piY = (1 / n) * I_Y @ psi_Z  # (B+1) x 2R
-    T = bar_Z_B_piX - bar_Z_B_piY  # (B+1) x 2R
-    V = np.sum(T ** 2, axis=1)  # (B+1, )
+    # Compute test statistics
+    bar_Z_B_piX = (1 / m) * I_X @ psi_Z
+    bar_Z_B_piY = (1 / n) * I_Y @ psi_Z
+    T = bar_Z_B_piX - bar_Z_B_piY
+    V = np.sum(T ** 2, axis=1)
 
-    test_stats = V
+    rMMD2 = V[0]
+    output, _ = decide(V, rMMD2, B, alpha)
 
-    rMMD2 = test_stats[0]
-
-    # take decision based on empirical threshold and level
-    output, _ = decide(test_stats, rMMD2, B, alpha)
-
-    dt = time.time() - start
-
+    dt = time.time() - start  # Compute execution time
     return output, dt, k
