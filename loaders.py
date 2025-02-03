@@ -4,7 +4,7 @@ import re
 
 def load_results(folder, data, method='uniform'):
     if data == 'susy' or 'hiss':
-        return load_results(folder, method=method)
+        return load_results_higgs(folder, method=method)
     
     elif data == "cg":
         return load_results_CG(folder, method=method)
@@ -12,7 +12,7 @@ def load_results(folder, data, method='uniform'):
 
 
 # Function to load results from a folder based on the method type
-def load_results(folder, method='uniform'):
+def load_results_higgs(folder, method='uniform'):
 
     # Handle 'fullrank' method
     if method == 'fullrank':
