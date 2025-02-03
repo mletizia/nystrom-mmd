@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import argparse
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
 from tests import rMMDtest, MMDb_test, NysMMDtest
@@ -9,21 +10,39 @@ from stat_utils import list_num_features, check_if_seeds_exist, median_pairwise
 # Define constant for scaling
 SQRT_2 = np.sqrt(2)
 
-# Specify which tests to perform
-which_tests = ["uniform", "rlss", "rff"]  # Test types to run. Options: "fullrank", "uniform",  "rlss", "rff"
+def main():
 
-# Parameters for statistical testing
-alpha = 0.05  # Significance level of the test
-B = 199  # Number of permutations in the permutation test
-n_tests = 400  # Number of tests to perform on different subsamples
+    parser = argparse.ArgumentParser() #description="Greet the user with required named arguments.")
 
-# Parameters for dataset sampling
-sample_sizes = [1000, 2000, 4000, 8000, 12000, 16000, 20000]  # Size of each sample. Total size = 2 * sample_size
-lambda_mix = 0.05  # Proportion of class 1 in the mixture. (1-lambda_mix) will be the proportion of class 0.
+    # Required named arguments
+    parser.add_argument('--tests', default=["uniform", "rlss", "rff"] , type=list, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
+    parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
+    parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
+    parser.add_argument('--N', default=400 , type=int, help='Number of repetitions')
+    parser.add_argument('--n', default=[1000, 2000, 4000, 8000, 12000, 16000, 20000] , type=list, help='List of sample sizes')
+    parser.add_argument('--mix', default=0.05 , type=float, help='Proportion of class 1 data in the mixture')
 
-# Main execution block
-if __name__ == "__main__":
+    #parser.add_argument('--age', required=True, type=int, help='Your age')
+
+    args = parser.parse_args()
+
+    # Specify which tests to perform
+    which_tests = args.tests  # Test types to run
+
+    # Parameters for statistical testing
+    alpha = args.alpha  # Significance level of the test
+    B = args.B  # Number of permutations in the permutation test
+    n_tests = args.N  # Number of tests to perform on different subsamples
+
+    # Parameters for dataset sampling
+    sample_sizes = args.n  # Sample sizes
+    lambda_mix = args.mix  # Proportion of class 1 in the mixture
+
     print("Susy experiments")  # Log the start of experiments
+
+    # Print all arguments
+    for arg, value in vars(args).items():
+        print(f"{arg}: {value}")
 
     # Load the full Higgs dataset
     X_all, Y_all = read_data_susy("/data/DATASETS/SUSY/Susy.mat")
@@ -41,6 +60,11 @@ if __name__ == "__main__":
         # Define output folder for storing results
         output_folder = f'./output_susy_paper/ntot{ntot}_B{B+1}_niter{n_tests}_mix{lambda_mix}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
+
+        # Save all arguments to a file
+        with open(output_folder + '/arguments.txt', 'w') as file:
+            for arg, value in vars(args).items():
+                file.write(f"{arg}: {value}\n")
 
         # Initialize arrays to store test results for each method
         if "fullrank" in which_tests:
@@ -104,3 +128,7 @@ if __name__ == "__main__":
             np.save(output_folder + '/rlss/results.npy', output_rlss)
         if "rff" in which_tests:
             np.save(output_folder + '/rff/results.npy', output_rff)
+
+# Main execution block
+if __name__ == "__main__":
+    main()
