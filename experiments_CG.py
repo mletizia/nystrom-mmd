@@ -5,7 +5,7 @@ import argparse
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
 from tests import rMMDtest, MMDb_test, NysMMDtest
 from sampler import generate_correlated_gaussians
-from stat_utils import check_if_seeds_exist, standardize_data, median_pairwise
+from utils import check_if_seeds_exist, standardize_data, median_pairwise
 
 # Define constant for scaling
 SQRT_2 = np.sqrt(2)

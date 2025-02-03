@@ -4,8 +4,8 @@ import argparse
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
 from tests import rMMDtest, MMDb_test, NysMMDtest
-from sampler import sample_higgs_susy_dataset, read_data_susy
-from stat_utils import list_num_features, check_if_seeds_exist, median_pairwise
+from samplers import sample_higgs_susy_dataset, read_data_susy
+from utils import list_num_features, check_if_seeds_exist, median_pairwise
 
 # Define constant for scaling
 SQRT_2 = np.sqrt(2)
