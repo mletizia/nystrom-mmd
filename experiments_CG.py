@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import argparse
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
 from tests import rMMDtest, MMDb_test, NysMMDtest
@@ -9,40 +10,65 @@ from stat_utils import check_if_seeds_exist, standardize_data, median_pairwise
 # Define constant for scaling
 SQRT_2 = np.sqrt(2)
 
-# Specify which tests to perform
-which_tests = ["uniform", "rlss", "rff"]  # Test types to run
+def main():
 
-# Parameters for statistical testing
-alpha = 0.05  # Significance level of the test
-B = 99  # Number of permutations in the permutation test
-n_tests = 2  # Number of tests to perform on different subsamples
+    parser = argparse.ArgumentParser() #description="Greet the user with required named arguments.")
 
-# Parameters for dataset sampling
-n = 2500  # Size of each sample. Total size = 2 * sample_size
-d = 3  # Number of dimensions
-RHO2 = [0.51, 0.54, 0.57, 0.60, 0.63, 0.66]  # Correlation values to test
+    # Required named arguments
+    parser.add_argument('--tests', default=["uniform", "rlss", "rff"] , type=list, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
+    parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
+    parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
+    parser.add_argument('--N', default=400 , type=int, help='Number of repetitions')
+    parser.add_argument('--n', default=2500 , type=int, help='Sample size')
+    parser.add_argument('--d', default=3 , type=int, help='Dimensions')
+    parser.add_argument('--rho1', default=0.5 , type=float, help='Values of rho1')
+    parser.add_argument('--rho2', default=[0.51, 0.54, 0.57, 0.60, 0.63, 0.66] , type=list, help='List of values of rho2 paramenter.')
+    parser.add_argument('--K', default=[14, 28 , 42, 56, 70, 140, 350] , type=list, help='List of values of num. of features.')
 
-# Compute total sample size
-ntot = 2 * n
+    #parser.add_argument('--age', required=True, type=int, help='Your age')
 
-# Define feature list
-K = [14, 28 , 42, 56, 70, 140, 350]
-print(f"Num. of features {K}")
+    args = parser.parse_args()
 
-# Main execution block
-if __name__ == "__main__":
+    # Specify which tests to perform
+    which_tests = args.tests  # Test types to run
+
+    # Parameters for statistical testing
+    alpha = args.alpha  # Significance level of the test
+    B = args.B  # Number of permutations in the permutation test
+    n_tests = args.N  # Number of tests to perform on different subsamples
+
+    # Parameters for dataset sampling
+    n = args.n  # Size of each sample. Total size = 2 * sample_size
+    d = args.d  # Number of dimensions
+    RHO2 = args.rho2  # Correlation values to test
+
+    # Compute total sample size
+    ntot = 2 * n
+
+    # Define feature list
+    K = args.K
+
     print("CG experiments")  # Log the start of experiments
+
+    # Print all arguments
+    for arg, value in vars(args).items():
+        print(f"{arg}: {value}")
 
     # Iterate over different correlation values
     for rho2 in RHO2:
         # Estimate the median pairwise distance for the RBF kernel parameter
-        X_tune = generate_correlated_gaussians(500, d, rho1=0.5, rho2=rho2, seed=None)
+        X_tune = generate_correlated_gaussians(500, d, rho1=args.rho1, rho2=rho2, seed=None)
         X_tune = standardize_data(X_tune)
         sigmahat = median_pairwise(X_tune)  # Compute kernel bandwidth
 
         # Define output folder for storing results
         output_folder = f'./output_CG/ntot{ntot}_B{B+1}_niter{n_tests}_rho{rho2}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
+
+        # Save all arguments to a file
+        with open(output_folder + '/arguments.txt', 'w') as file:
+            for arg, value in vars(args).items():
+                file.write(f"{arg}: {value}\n")
 
         # Initialize arrays to store test results for each method
         if "fullrank" in which_tests:
@@ -107,3 +133,9 @@ if __name__ == "__main__":
             np.save(output_folder + '/rlss/results.npy', output_rlss)
         if "rff" in which_tests:
             np.save(output_folder + '/rff/results.npy', output_rff)
+
+
+# Main execution block
+if __name__ == "__main__":
+
+    main()
