@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import argparse
+from datetime import datetime
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
 from tests import rMMDtest, MMDb_test, NysMMDtest
@@ -12,20 +13,18 @@ SQRT_2 = np.sqrt(2)
 
 def main():
 
-    parser = argparse.ArgumentParser() #description="Greet the user with required named arguments.")
+    parser = argparse.ArgumentParser() 
 
     # Required named arguments
-    parser.add_argument('--tests', default=["uniform", "rlss", "rff"] , type=list, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
+    parser.add_argument('--tests', nargs='+', type=str, default=["uniform", "rlss", "rff"], help='Input tests as a list.')    
     parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
     parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
     parser.add_argument('--N', default=400 , type=int, help='Number of repetitions')
     parser.add_argument('--n', default=2500 , type=int, help='Sample size')
     parser.add_argument('--d', default=3 , type=int, help='Dimensions')
     parser.add_argument('--rho1', default=0.5 , type=float, help='Values of rho1')
-    parser.add_argument('--rho2', default=[0.51, 0.54, 0.57, 0.60, 0.63, 0.66] , type=list, help='List of values of rho2 paramenter.')
-    parser.add_argument('--K', default=[14, 28 , 42, 56, 70, 140, 350] , type=list, help='List of values of num. of features.')
-
-    #parser.add_argument('--age', required=True, type=int, help='Your age')
+    parser.add_argument('--rho2', nargs='+', type=float, default=[0.51, 0.54, 0.57, 0.60, 0.63, 0.66], help='List of values of rho2.')
+    parser.add_argument('--K', nargs='+', type=int, default=[14, 28, 42, 56, 70, 140, 350], help='List of num. of features.')
 
     args = parser.parse_args()
 
@@ -62,13 +61,13 @@ def main():
         sigmahat = median_pairwise(X_tune)  # Compute kernel bandwidth
 
         # Define output folder for storing results
-        output_folder = f'./output_CG/ntot{ntot}_B{B+1}_niter{n_tests}_rho{rho2}'
+        output_folder = './'+str(datetime.now().date())+f'/cg_ntot{ntot}_B{B+1}_niter{n_tests}/var{rho2}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
 
-        # Save all arguments to a file
-        with open(output_folder + '/arguments.txt', 'w') as file:
-            for arg, value in vars(args).items():
-                file.write(f"{arg}: {value}\n")
+        # # Save all arguments to a file
+        # with open(output_folder + '/arguments.txt', 'w') as file:
+        #     for arg, value in vars(args).items():
+        #         file.write(f"{arg}: {value}\n")
 
         # Initialize arrays to store test results for each method
         if "fullrank" in which_tests:

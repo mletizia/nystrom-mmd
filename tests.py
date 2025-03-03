@@ -7,7 +7,7 @@ import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from stat_utils import decide, independent_permutation
+from utils import decide, independent_permutation
 
 from mmd import MMD2b
 
