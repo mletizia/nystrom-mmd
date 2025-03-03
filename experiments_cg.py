@@ -61,7 +61,7 @@ def main():
         sigmahat = median_pairwise(X_tune)  # Compute kernel bandwidth
 
         # Define output folder for storing results
-        output_folder = './'+str(datetime.now().date())+f'/cg_ntot{ntot}_B{B+1}_niter{n_tests}/var{rho2}'
+        output_folder = './results/'+str(datetime.now().date())+f'/cg_ntot{ntot}_B{B+1}_niter{n_tests}/var{rho2}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
 
         # # Save all arguments to a file
