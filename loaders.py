@@ -78,68 +78,6 @@ def return_parameters(s: str) -> dict:
     return {"dataset": dataset_name, **params}
 
 
-# def load_results(folder, data, method='uniform'):
-#     if data == 'cg':
-#         return load_results_CG(folder, method=method)
-    
-#     else: return load_results_higgs(folder, method=method)
-    
-
-
-# # Function to load results from a folder based on the method type
-# def load_results_higgs(folder, method='uniform'):
-
-#     # Handle 'fullrank' method
-#     if method == 'fullrank':
-#         files = glob(folder+"/*/fullrank/results.npy", recursive=True)
-#         files = sorted(files, key=extract_ntot_fromstring)  # Sort based on ntot in filename
-#         results = [np.load(el) for el in files]
-
-#         # Calculate average time, power, and number of features for each result
-#         time_pow_nfeat = [(el[:,1].mean(axis=0), el[:,0].mean(axis=0), el[:,2].mean(axis=0)) for el in results]
-
-#     else:  # Handle other methods
-#         files = glob(folder+"/*/"+method+"/results.npy", recursive=True)
-#         files = sorted(files, key=extract_ntot_fromstring)  # Sort based on ntot in filename
-#         results = [np.load(el) for el in files]
-
-#         # Calculate average time, power, and number of features for each result
-#         time_pow_nfeat = [(el[:,:,1].mean(axis=0), el[:,:,0].mean(axis=0), el[:,:,2].mean(axis=0)) for el in results]
-
-#     file_0_path = Path(files[0]) # read config from first file (they are all the same)
-#     config = read_config_if_exists(file_0_path.parts[0]+'/'+file_0_path.parts[1]+'/'+'arguments.txt')
-
-#     return np.asarray(time_pow_nfeat), config
-
-
-
-# # Similar function to load results, but specific for 'CG' data
-# def load_results_CG(folder, method='uniform'):
-
-#     if method == 'fullrank':
-#         print(f"loading {method}")
-#         files = glob(folder+"/*/fullrank/results.npy", recursive=True)
-#         files = sorted(files, key=extract_rho_fromstring)  # Sort based on rho in filename
-#         results = [np.load(el) for el in files]
-#         # Calculate average time, power, and number of features for each result
-#         time_pow_nfeat = [(el[:,1].mean(axis=0), el[:,0].mean(axis=0), el[:,2].mean(axis=0)) for el in results]
-
-#     else:  # Handle other methods
-#         print(f"loading {method}")
-#         files = glob(folder+"/*/"+method+"/results.npy", recursive=True)
-#         print(files)
-#         files = sorted(files, key=extract_rho_fromstring)  # Sort based on rho in filename
-#         results = [np.load(el) for el in files]
-
-#         # Calculate average time, power, and number of features for each result
-#         time_pow_nfeat = [(el[:,:,1].mean(axis=0), el[:,:,0].mean(axis=0), el[:,:,2].mean(axis=0)) for el in results]
-        
-
-#     file_0_path = Path(files[0]) # read config from first file (they are all the same)
-#     config = read_config_if_exists(file_0_path.parts[0]+'/'+file_0_path.parts[1]+'/'+'arguments.txt')
-
-#     return np.asarray(time_pow_nfeat), config
-
 # Helper function to extract 'ntot' value from filenames
 def extract_ntot_fromstring(s):
     match = re.search(r'ntot(\d+)_', s)  # Find digits between 'n' and '_'
