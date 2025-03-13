@@ -1,81 +1,47 @@
 from glob import glob
 import numpy as np
-import re
-
-def load_results(folder, data, method='uniform'):
-    if data == 'susy' or 'hiss':
-        return load_results_higgs(folder, method=method)
-    
-    elif data == "cg":
-        return load_results_CG(folder, method=method)
-    
+from utils import extract_var_fromstring, return_parameters
 
 
-# Function to load results from a folder based on the method type
-def load_results_higgs(folder, method='uniform'):
 
-    # Handle 'fullrank' method
-    if method == 'fullrank':
-        files = []
-        for file in glob(folder+"/*/"+method+"/results.npy"):
-            files.append(file)
-        files = sorted(files, key=extract_ntot_fromstring)  # Sort based on ntot in filename
-        results = [np.load(el) for el in files]
+# Similar function to load results, but specific for 'CG' data
+def load_results(folder, methods=['uniform','rff','rlss']):
 
-        n_rep = np.shape(results)[1]  # Get the number of repetitions
+    config = return_parameters(folder)
 
-        # Calculate average time, power, and number of features for each result
-        time_pow_nfeat = [(el[:,1].mean(axis=0), el[:,0].mean(axis=0), el[:,2].mean(axis=0)) for el in results]
+    results_dict = {}
 
-    else:  # Handle other methods
-        files = []
-        for file in glob(folder+"/*/"+method+"/results.npy"):
-            files.append(file)
-        files = sorted(files, key=extract_ntot_fromstring)  # Sort based on ntot in filename
-        results = [np.load(el) for el in files]
+    for method in methods:
 
-        n_rep = np.shape(results)[1]  # Get the number of repetitions
+        if method == 'fullrank':
+            print(f"loading {method}")
+            files = glob(folder+"/*/fullrank/results.npy", recursive=True)
+            print(files)
+            files = sorted(files, key=extract_var_fromstring)  # Sort based on var parameter in filename
+            results = [np.load(el) for el in files]
+            sorted_vars = [extract_var_fromstring(file) for file in files]
 
-        # Calculate average time, power, and number of features for each result
-        time_pow_nfeat = [(el[:,:,1].mean(axis=0), el[:,:,0].mean(axis=0), el[:,:,2].mean(axis=0)) for el in results]
+            # Calculate average time, power, and number of features for each result
+            time_pow_nfeat = np.asarray([(el[:,1].mean(axis=0), el[:,0].mean(axis=0), el[:,2].mean(axis=0)) for el in results])
 
-    return np.asarray(time_pow_nfeat)
+            results_dict[method] = time_pow_nfeat
 
-# Similar function to load results, but specific for 'CG' method
-def load_results_CG(folder, method='uniform'):
+        else:  # Handle other methods
+            print(f"loading {method}")
+            files = glob(folder+"/*/"+method+"/results.npy", recursive=True)
+            print(files)
+            files = sorted(files, key=extract_var_fromstring)  # Sort based on var parameter in filename
+            results = [np.load(el) for el in files]
+            sorted_vars = [extract_var_fromstring(file) for file in files]
 
-    if method == 'fullrank':
-        files = []
-        for file in glob(folder+"/*/"+method+"/results.npy"):
-            files.append(file)
-        files = sorted(files, key=extract_rho_fromstring)  # Sort based on rho in filename
-        results = [np.load(el) for el in files]
+            # Calculate average time, power, and number of features for each result
+            time_pow_nfeat = np.asarray([(el[:,:,1].mean(axis=0), el[:,:,0].mean(axis=0), el[:,:,2].mean(axis=0)) for el in results])
 
-        n_rep = np.shape(results)[1]  # Get the number of repetitions
+            results_dict[method] = time_pow_nfeat
 
-        # Calculate average time, power, and number of features for each result
-        time_pow_nfeat = [(el[:,1].mean(axis=0), el[:,0].mean(axis=0), el[:,2].mean(axis=0)) for el in results]
+            
 
-    else:  # Handle other methods
-        files = []
-        for file in glob(folder+"/*/"+method+"/results.npy"):
-            files.append(file)
-        files = sorted(files, key=extract_rho_fromstring)  # Sort based on rho in filename
-        results = [np.load(el) for el in files]
+        # file_0_path = Path(files[0]) # read config from first file (they are all the same)
+        # config = read_config_if_exists(file_0_path.parts[0]+'/'+file_0_path.parts[1]+'/'+'arguments.txt')
 
-        n_rep = np.shape(results)[1]  # Get the number of repetitions
-
-        # Calculate average time, power, and number of features for each result
-        time_pow_nfeat = [(el[:,:,1].mean(axis=0), el[:,:,0].mean(axis=0), el[:,:,2].mean(axis=0)) for el in results]
-
-    return np.asarray(time_pow_nfeat)
-
-# Helper function to extract 'ntot' value from filenames
-def extract_ntot_fromstring(s):
-    match = re.search(r'ntot(\d+)_', s)  # Find digits between 'n' and '_'
-    return int(match.group(1)) if match else 0  # Convert to integer for proper sorting
-
-# Helper function to extract 'rho' value from filenames
-def extract_rho_fromstring(s):
-    match = re.search(r'rho([\d\.]+)', s)  # Find digits between 'n' and '_'
-    return float(match.group(1)) if match else 0.0  # Convert to float for proper sorting
+    return results_dict, config, sorted_vars

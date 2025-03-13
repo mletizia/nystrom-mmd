@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import argparse
+from datetime import datetime
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
 from tests import rMMDtest, MMDb_test, NysMMDtest
@@ -12,19 +13,22 @@ SQRT_2 = np.sqrt(2)
 
 def main():
 
-    parser = argparse.ArgumentParser() #description="Greet the user with required named arguments.")
+    parser = argparse.ArgumentParser()
 
     # Required named arguments
-    parser.add_argument('--tests', default=["uniform", "rlss", "rff"] , type=list, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
+    parser.add_argument('--output_folder', type=str, default="./results", help='Folder where to store results. Default "./results".')   
+    parser.add_argument('--tests', nargs='+', default=["uniform", "rlss", "rff"] , type=str, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
     parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
     parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
     parser.add_argument('--N', default=400 , type=int, help='Number of repetitions')
-    parser.add_argument('--n', default=[1000, 2000, 4000, 8000, 12000, 16000, 20000] , type=list, help='List of sample sizes')
+    parser.add_argument('--n', nargs='+', default=[1000, 2000, 4000, 8000, 12000, 16000, 20000] , type=int, help='List of sample sizes')
     parser.add_argument('--mix', default=0.05 , type=float, help='Proportion of class 1 data in the mixture')
 
-    #parser.add_argument('--age', required=True, type=int, help='Your age')
 
     args = parser.parse_args()
+
+    # Output folder
+    of = args.output_folder
 
     # Specify which tests to perform
     which_tests = args.tests  # Test types to run
@@ -58,13 +62,13 @@ def main():
         print(f"Num. of features {K}")
 
         # Define output folder for storing results
-        output_folder = f'./output_susy_paper/ntot{ntot}_B{B+1}_niter{n_tests}_mix{lambda_mix}'
+        output_folder = of+"/"+str(datetime.now().date())+f'/susy_B{B+1}_niter{n_tests}_mix{lambda_mix}/var{ntot}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
 
-        # Save all arguments to a file
-        with open(output_folder + '/arguments.txt', 'w') as file:
-            for arg, value in vars(args).items():
-                file.write(f"{arg}: {value}\n")
+        # # Save all arguments to a file
+        # with open(output_folder + '/arguments.txt', 'w') as file:
+        #     for arg, value in vars(args).items():
+        #         file.write(f"{arg}: {value}\n")
 
         # Initialize arrays to store test results for each method
         if "fullrank" in which_tests:
