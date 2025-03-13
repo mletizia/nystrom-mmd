@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Required named arguments
+    parser.add_argument('--output_folder', type=str, default="./results", help='Folder where to store results. Default "./results".')   
     parser.add_argument('--tests', nargs='+', default=["uniform", "rlss", "rff"] , type=str, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
     parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
     parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
@@ -25,6 +26,9 @@ def main():
 
 
     args = parser.parse_args()
+
+    # Output folder
+    of = args.output_folder
 
     # Specify which tests to perform
     which_tests = args.tests  # Test types to run
@@ -58,7 +62,7 @@ def main():
         print(f"Num. of features {K}")
 
         # Define output folder for storing results
-        output_folder = './'+str(datetime.now().date())+f'/susy_B{B+1}_niter{n_tests}_mix{lambda_mix}/var{ntot}'
+        output_folder = of+"/"+str(datetime.now().date())+f'/susy_B{B+1}_niter{n_tests}_mix{lambda_mix}/var{ntot}'
         os.makedirs(output_folder, exist_ok=True)  # Create the output folder if it does not exist
 
         # # Save all arguments to a file
