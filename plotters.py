@@ -3,7 +3,7 @@ from utils import power_interval
 
 import matplotlib.pyplot as plt
 
-def plot_powervsvars(results, vars, config):
+def plot_powervsvars(results, vars, config, file=False):
     # plot power (at sqrt(n)) vs sample size or separation parameter
 
     label_dict = {
@@ -53,10 +53,11 @@ def plot_powervsvars(results, vars, config):
     plt.locator_params(nbins=6, axis='x')
     plt.legend(loc='best', fontsize=15)
     plt.grid()
+    if file: plt.savefig(file)
     plt.show()
 
 
-def plot_powervscomp(results, var, config):
+def plot_powervscomp(results, var, config, file=False):
     # plot power (at sqrt(n)) vs sample size or separation parameter
 
     label_dict = {
@@ -99,10 +100,11 @@ def plot_powervscomp(results, var, config):
     plt.legend(loc='best', fontsize=15)
     plt.xscale('log')
     plt.grid()
+    if file: plt.savefig(file)
     plt.show()
 
 
-def plot_powervsnfeat(results, var, config):
+def plot_powervsnfeat(results, var, config, file=False):
     # plot power vs number of random features
 
     label_dict = {
@@ -145,4 +147,5 @@ def plot_powervsnfeat(results, var, config):
     plt.legend(loc='best', fontsize=15)
     plt.xscale('log')
     plt.grid()
+    if file: plt.savefig(file)
     plt.show()
