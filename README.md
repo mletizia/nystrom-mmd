@@ -1,7 +1,20 @@
 # nystrom-mmd
-A Scalable Nyström-Based Kernel Two-Sample Test with Permutations
 
-To reproduce the numerical studies of the paper, launch the experiments_*.py files.
-To generate plots use the analysis notebooks.
+This repository contains the official implementation for the paper:
 
-The functions implementing each test can be found in [test.py](tests.py).
+**A. Chatalic, M. Letizia, N. Schreuder, L. Rosasco**  
+*An Efficient Permutation-Based Kernel Two-Sample Test*  
+[arXiv:2502.13570](https://arxiv.org/abs/2502.13570)
+
+---
+
+## Reproducing Results
+
+- **Experiments**: Run the `experiments_*.py` scripts to reproduce the numerical studies presented in the paper.  
+- **Analysis & Plots**: Use the Jupyter notebooks in the `analysis/` directory to generate figures and further analysis.
+
+---
+
+## Status
+This codebase is currently under final revision.
+
