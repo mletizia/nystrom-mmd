@@ -1,0 +1,9 @@
+output_folder: ./results
+alpha: 0.05
+B: 199
+N: 400
+n: [500, 2500, 5000, 10000, 20000, 30000, 40000, 50000]
+mix: 0.0
+reduced: 0
+compression: [0, 1, 2, 3, 4]
+bins: 32

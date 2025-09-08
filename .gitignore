@@ -1,4 +1,7 @@
 results/
+results_split/
+
+single_test.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

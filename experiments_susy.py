@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
-from tests import rMMDtest, MMDb_test, NysMMDtest
+from tests import rMMDtest, MMDb_test, NysMMDtest, MMDb_test_fast
 from samplers import sample_higgs_susy_dataset, read_data_susy
 from utils import list_num_features, check_if_seeds_exist, median_pairwise
 
@@ -17,11 +17,11 @@ def main():
 
     # Required named arguments
     parser.add_argument('--output_folder', type=str, default="./results", help='Folder where to store results. Default "./results".')   
-    parser.add_argument('--tests', nargs='+', default=["uniform", "rlss", "rff"] , type=str, help='Input tests as a list, e.g.: ["fullrank", "uniform", "rlss", "rff"]')
+    parser.add_argument('--tests', nargs='+', default=["uniform", "rlss", "rff"] , type=str, help='Input tests as a list, e.g.: fullrank uniform rlss rff')
     parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
     parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
     parser.add_argument('--N', default=400 , type=int, help='Number of repetitions')
-    parser.add_argument('--n', nargs='+', default=[1000, 2000, 4000, 8000, 12000, 16000, 20000] , type=int, help='List of sample sizes')
+    parser.add_argument('--n', nargs='+', default=[1000, 2000, 4000, 8000, 12000, 16000, 20000, 40000] , type=int, help='List of sample sizes')
     parser.add_argument('--mix', default=0.05 , type=float, help='Proportion of class 1 data in the mixture')
 
 
@@ -58,7 +58,10 @@ def main():
     # Iterate over different sample sizes
     for n in sample_sizes:
         ntot = 2 * n
-        K = list_num_features(ntot)
+        # K = list_num_features(ntot)
+        # print(f"Num. of features {K}")
+        sqrt_n = int(np.sqrt(ntot))
+        K = [10*sqrt_n]
         print(f"Num. of features {K}")
 
         # Define output folder for storing results
@@ -103,7 +106,7 @@ def main():
             # Perform full-rank permutation test if specified
             if "fullrank" in which_tests:
                 print("Fullrank test")
-                output_full[test, :] = MMDb_test(X, sigmahat, seed=None, B=199, plot=False)
+                output_full[test, :] = MMDb_test_fast(X, bw=sigmahat, seed=test_seed, alpha=0.05, B=199, plot=False)
 
             # Perform uniform Nyström-based permutation test if specified
             if "uniform" in which_tests:

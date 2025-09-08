@@ -70,9 +70,9 @@ def read_data_higgs(file_name, reduced=0):
         arr = np.array(h5py_file["X"], dtype=np.float64).T  # Transpose for correct orientation
     # Select which features to use based on reduction flag
     if reduced == 1:
-        X = arr[:, [8,12,16,20]]  # A subset of features
+        X = arr[:, [8,12,16,20]]  # Jet phis
     elif reduced == 2:
-        X = arr[:, [8,12]]  # Even smaller subset
+        X = arr[:, [8,12]]  # First two jet phis
     else:
         X = arr[:, 1:15]  # Default: low-level features
     Y = arr[:, 0]  # Labels are stored in the first column
@@ -100,7 +100,7 @@ def read_data_susy(file_name):
     # Open the HDF5 file and read the data
     with h5py.File(file_name, "r") as h5py_file:
         arr = np.array(h5py_file["X"], dtype=np.float64).T  # Transpose for correct orientation
-    X = arr[:, 1:9]  # Use a subset of features (low-level only)
+    X = arr[:, 1:9]  # Low-level features
     Y = arr[:, 0]  # Labels are stored in the first column
     print("Done")
     return X, Y  # Return features and labels
@@ -142,6 +142,7 @@ def sample_higgs_susy_dataset(Z, Y, n, alpha_mix=1, seed=None):
     # Sample n instances from class 0
     if len(class_0_indices) < n:
         raise ValueError(f"Not enough instances in class 0 to sample {n}. Available: {len(class_0_indices)}")
+    
     sampled_class_0_indices = rng.choice(class_0_indices, n, replace=False)  # Without replacement
 
     # Sample n instances for the mixed set with a specified proportion of class 0 and class 1
@@ -163,6 +164,9 @@ def sample_higgs_susy_dataset(Z, Y, n, alpha_mix=1, seed=None):
     
     # Combine the indices for the mixed set
     mixed_indices = np.concatenate([mixed_class_0_indices, mixed_class_1_indices])
+    
+    # shuffle background and signal indices
+    rng.shuffle(mixed_indices)
 
     # Prepare output array for the sampled data
     sampled_Z = np.empty((2 * n, Z.shape[1]), dtype=Z.dtype)

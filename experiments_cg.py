@@ -24,8 +24,8 @@ def main():
     parser.add_argument('--n', default=2500 , type=int, help='Sample size')
     parser.add_argument('--d', default=3 , type=int, help='Dimensions')
     parser.add_argument('--rho1', default=0.5 , type=float, help='Values of rho1')
-    parser.add_argument('--rho2', nargs='+', type=float, default=[0.51, 0.54, 0.57, 0.60, 0.63, 0.66], help='List of values of rho2.')
-    parser.add_argument('--K', nargs='+', type=int, default=[14, 28, 42, 56, 70, 140, 350], help='List of num. of features.')
+    parser.add_argument('--rho2', nargs='+', type=float, default=[0.51, 0.54, 0.57, 0.60, 0.63, 0.66, 0.69], help='List of values of rho2.')
+    parser.add_argument('--K', nargs='+', type=int, default=[14, 28, 42, 56, 70, 140, 350, 500], help='List of num. of features.')
 
     args = parser.parse_args()
 

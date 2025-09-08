@@ -47,7 +47,7 @@ def nystrom_features(X, nys_inds, sigma):
 
 
 
-def nys_inds(X, k, method, sigma, lam, seed):
+def nys_inds(X, k, method, sigma, seed):
     """
     Compute indices for Nyström approximation based on a specified method.
     
@@ -60,12 +60,10 @@ def nys_inds(X, k, method, sigma, lam, seed):
         The method for selecting indices:
         - 'full_rank': Select all indices.
         - 'uniform': Select indices uniformly at random.
-        - 'bless': Use the BLESS algorithm for sampling.
+        - 'rlss': Use the rlss algorithm for sampling.
     sigma : float, optional, default=1
         Parameter for the RBF kernel in the 'bless' method. -  note that some kernels take sigma: gamma=1/(2 sigma^2)
 
-    lam : float, optional, default=0.1
-        Regularization parameter for the BLESS algorithm.
     seed : int, optional, default=0
         Random seed for reproducibility.
 
@@ -79,6 +77,9 @@ def nys_inds(X, k, method, sigma, lam, seed):
     # Get the number of samples in the dataset
     ntot = X.shape[0]
 
+    if k > ntot:
+        print("Num. of landmarks > num. of points: k = n")
+        k = ntot
 
     gamma = 1 / (2 * sigma**2)
 

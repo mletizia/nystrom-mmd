@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 
 # Import custom utilities for Nyström permutation test, kernel parameter estimation, and dataset sampling
-from tests import rMMDtest, MMDb_test, NysMMDtest
+from tests import rMMDtest, MMDb_test, NysMMDtest, MMDb_test_fast
 from samplers import sample_higgs_susy_dataset, read_data_higgs
 from utils import list_num_features, check_if_seeds_exist, median_pairwise
 
@@ -18,13 +18,14 @@ def main():
 
     # Required named arguments
     parser.add_argument('--output_folder', type=str, default="./results", help='Folder where to store results. Default "./results".')   
-    parser.add_argument('--tests', nargs='+', type=str, default=["uniform", "rlss", "rff"], help='Input tests as a list.')    
+    parser.add_argument('--tests', nargs='+', type=str, default=["uniform", "rlss", "rff"], help='Input tests as a list, e.g.: fullrank uniform rlss rff')    
     parser.add_argument('--alpha', default=0.05 , type=float, help='Level of the test')
     parser.add_argument('--B', default=199 , type=int, help='Number of permutations')
     parser.add_argument('--N', default=400 , type=int, help='Number of repetitions')
-    parser.add_argument('--n', nargs='+', default=[500, 2500, 5000, 10000, 20000, 30000, 40000] , type=int, help='List of sample sizes')
+    parser.add_argument('--n', nargs='+', default=[500, 2500, 5000, 10000, 20000, 30000, 40000, 50000] , type=int, help='List of sample sizes')
     parser.add_argument('--mix', default=0.2 , type=float, help='Proportion of class 1 data in the mixture')
     parser.add_argument('--reduced', default=0 , type=int, help='Reduced: 0 (low-evel), 1 (4d), 2 (2d)')
+    parser.add_argument('--K', default=None , type=int, help='Number of features')
 
 
     args = parser.parse_args()
@@ -39,6 +40,7 @@ def main():
     alpha = args.alpha  # Significance level of the test
     B = args.B  # Number of permutations in the permutation test
     n_tests = args.N  # Number of tests to perform on different subsamples
+    K_input = args.K
 
     # Parameters for dataset sampling
     sample_sizes = args.n  # Sample sizes
@@ -61,7 +63,8 @@ def main():
     # Iterate over different sample sizes
     for n in sample_sizes:
         ntot = 2 * n
-        K = list_num_features(ntot)
+        if K_input==None: K = list_num_features(ntot)
+        else: K = [K_input]
         print(f"Num. of features {K}")
 
         # Define output folder
@@ -101,7 +104,7 @@ def main():
 
             if "fullrank" in which_tests:
                 print("Fullrank test")
-                output_full[test, :] = MMDb_test(X, sigmahat, seed=None, B=199, plot=False)
+                output_full[test, :] = MMDb_test_fast(X, bw=sigmahat, seed=test_seed, alpha=0.05, B=199, plot=False)
 
             if "uniform" in which_tests:
                 print("Uniform test")

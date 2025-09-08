@@ -41,3 +41,32 @@ def MMD2b(x, y, sigma):
     mmd2 = K_xx.mean() + K_yy.mean() - 2 * K_xy.mean()
     
     return mmd2
+
+
+def MMD2b_from_K(K: np.ndarray, A: np.ndarray) -> float:
+    """
+    Compute biased MMD^2 given a full kernel matrix.
+
+    Args:
+        K (np.ndarray): Full kernel matrix of shape (N, N), with N = 2n.
+        A (np.ndarray): Indices (size n) of the first sample group.
+                        The complement indices are used for the second group.
+
+    Returns:
+        float: Biased MMD^2 statistic.
+    """
+    n = A.size
+    N = K.shape[0]
+
+    # Complement indices for group B
+    mask = np.ones(N, dtype=bool)
+    mask[A] = False
+    B = np.nonzero(mask)[0]
+
+    # Block sums
+    sumAA = K[np.ix_(A, A)].sum()
+    sumBB = K[np.ix_(B, B)].sum()
+    sumAB = K[np.ix_(A, B)].sum()
+
+    # Biased MMD^2 (includes diagonals)
+    return (sumAA + sumBB) / (n**2) - 2.0 * sumAB / (n**2)
